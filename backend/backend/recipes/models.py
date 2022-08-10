@@ -1,46 +1,72 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 
-from .validators import UsernameValidator
+from core.validators import cooking_time_validator
 
 
 User = get_user_model()
 
-# class User(AbstractUser):
-#     username_validator = UsernameValidator()
-#     username = models.CharField(
-#         validators=(username_validator,),
-#         max_length=150,
-#         unique=True,
-#         blank=False,
-#         null=False
-#     )
-#     email = models.EmailField(
-#         max_length=255,
-#         unique=True,
-#         blank=False,
-#         null=False
-#     )
-#     first_name = models.CharField(
-#         'Имя',
-#         max_length=150,
-#         blank=True
-#     )
-#     last_name = models.CharField(
-#         'Фамилия',
-#         max_length=150,
-#         blank=True
-#     )
-#     is_subscribed = models.BooleanField(default=False)
+CHOICE_UNIT = (
+    ('gram', 'г'),
+    ('item', 'шт'),
+    ('tablespoon', 'ст. л.'),
+    ('mililiter', 'мл'),
+    ('tea_spoon', 'ч. л.'),
+    ('pinch', 'щепотка'),
+    ('taste', 'по вкусу')
+)
 
-#     class Meta:
-#         ordering = ('id',)
-#         verbose_name = 'Пользователь'
-#         verbose_name_plural = 'Пользователи'
+class Ingredient(models.Model):
+    name = models.CharField('Название ингредиента', unique=True, max_length=255)
+    measurement_unit = models.CharField(
+        'Единица измерения',
+        max_length=255,
+        choices=CHOICE_UNIT
+        )
+    amount = models.FloatField('Количество', default=0)
 
-#     def __str__(self):
-#         return self.username
+    def __str__(self):
+        return self.name
+
 
 class Recipe(models.Model):
+    """Рецепт пользователя."""
+    name = models.CharField('Название', blank=True, unique=True, max_length=255)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    image = models.ImageField('Изображение', blank=True, upload_to='recipes/images/')
+    text = models.TextField('Описание рецепта', blank=True)
+    cooking_time = models.IntegerField(
+        'Время приготовления',
+        validators=[cooking_time_validator]
+        )
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='RecipeIngredient'
+        )
+    # ingredients = models.ManyToManyField(
+    #     'Ingredient',
+    #     related_name='recipe'
+    #     )
+
+    def __str__(self):
+        return self.name
+
+
+class Tag(models.Model):
+    name = models.CharField(
+        'Название тега',
+        max_length=255,
+        unique=True,
+        blank=True)
+    slug = models.SlugField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.recipe} {self.ingredient}'
