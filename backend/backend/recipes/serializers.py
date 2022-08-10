@@ -64,7 +64,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     # ingredients = IngredientToRecipeSerializer(many=True)
     author = serializers.SlugRelatedField(
-        slug_field='username',
+        slug_field='email',
         queryset = User.objects.all()
         )
 
