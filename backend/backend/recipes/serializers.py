@@ -81,6 +81,7 @@ class TagSerializer(serializers.ModelSerializer):
 # --------------------------------------------------------------------------
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
+
     # ingredients = serializers.SlugRelatedField(
     #     slug_field='name',
     #     queryset=Ingredient.objects.all(),

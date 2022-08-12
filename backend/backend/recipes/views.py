@@ -1,11 +1,14 @@
 from django.shortcuts import get_list_or_404
 from rest_framework import viewsets
+from rest_framework.decorators import action
+
 
 from .serializers import (FollowSerializer, RecipeCreateSerializer,
                          RecipeReadSerializer, TagSerializer,
                          IngredientSerializer, IngredientReadSerializer,
                          TagSerializer)
 from .models import Follow, Recipe, Ingredient, Tag, User
+
 
 
 class RecipeViewset(viewsets.ModelViewSet):
@@ -16,9 +19,14 @@ class RecipeViewset(viewsets.ModelViewSet):
             return RecipeCreateSerializer
         return RecipeReadSerializer
 
-    # def perform_create(self, serializer):
-    #     author = self.request.user
-    #     serializer.save(author=author)
+
+    @action(detail=True)
+    def recipes(self, request):
+        print(request.user)
+        if request.user.is_athenticated and (self.get_serializer_class == RecipeCreateSerializer):
+            recipe = Recipe.objects.all().order_by('pk')
+            serializer = self.get_serializer(author=request.user)
+        return serializer.data
 
 
 class IngredientViewset(viewsets.ModelViewSet):
