@@ -1,16 +1,36 @@
 from rest_framework import serializers
 
+from djoser.serializers import UserCreateSerializer
 
 import webcolors
 
-from .models import Amount, Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag, User
+from .models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag
+from users.models import CustomUser
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(UserCreateSerializer):
 
     class Meta:
-        model = User
-        fields = ('username', 'id', 'email', 'first_name', 'last_name', )
+        model = CustomUser
+        fields = ('username', 'id', 'email', 'first_name', 'last_name', 'password', 'is_subscribed')
+
+class CustomUserCreateSerializer(UserCreateSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'first_name',
+            'last_name',
+            'email',
+            'username',
+            'password'
+        )
+        extra_kwargs = {
+            'email': {'required': True},
+            'username': {'required': True},
+            'password': {'required': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
 
 
 class ColorFieldSerializer(serializers.Field):
@@ -36,39 +56,19 @@ class IngredientReadSerializer(serializers.ModelSerializer):
 
 class IngredientSerializer(serializers.ModelSerializer):
 
-    amount = serializers.SerializerMethodField()
-
     class Meta:
         model = Ingredient
-        fields = ['name', 'measurement_unit', 'amount']
-
-    def get_amount(self, obj):
-        if type(obj.amount) == float:
-            return obj.amount
-        return str(obj.amount)
+        fields = ('name', 'measurement_unit', 'amount')
 
 
-# class IngredientToRecipeSerializer(serializers.ModelSerializer):
+class IngredientRecipeSerializer(serializers.ModelSerializer):
 
-#     class Meta:
-#         model = Ingredient
-#         fields = ['name', 'measurement_unit', 'amount']
-
-# class AmountSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Amount
-#         fields = ('amount',)
-
-
-class IngredientToRecipeSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
 
     class Meta:
-        model = Ingredient
-        fields = ['name', 'measurement_unit', 'amount']
+        model = RecipeIngredient
+        fields = ('id', 'amount')
 
-# -----------------------------------------------------------------------
-# ------------------------ Tags -----------------------------------------
 
 class TagSerializer(serializers.ModelSerializer):
 
@@ -78,79 +78,58 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('name', 'slug', 'color')
 
-# --------------------------------------------------------------------------
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
 
-    # ingredients = serializers.SlugRelatedField(
-    #     slug_field='name',
-    #     queryset=Ingredient.objects.all(),
-    #     many=True
-    # )
-
-    # tags = serializers.SlugRelatedField(
-    #     slug_field='slug',
-    #     queryset=Tag.objects.all(),
-    #     many=True
-    # )
-    tags = TagSerializer(many=True)
-    ingredients = IngredientToRecipeSerializer(many=True)
-    # author = serializers.StringRelatedField(read_only=True)
+    author = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
+    ingredients = IngredientRecipeSerializer(many=True)
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'id', 'name', 'author', 'image', 'text',
-                 'cooking_time', 'ingredients')
-
+        fields = '__all__'
    
     def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
         ingredients = validated_data.pop('ingredients')
-        # amount = ingredients[0]['recipeingredient']['amount']
-        # amount = ('amount', amount)
-        # ingredients = ingredients[0]
-        # print(ingredients)
-        
         tags = validated_data.pop('tags')
-        
         recipe = Recipe.objects.create(**validated_data)
         for ingredient in ingredients:
-            print(ingredient)
-            current_ingrd, status = Ingredient.objects.get_or_create(**ingredient)
-            RecipeIngredient.objects.create(recipe=recipe, ingredient=current_ingrd)
+            RecipeIngredient.objects.create(
+                                    recipe=recipe,
+                                    ingredient=ingredient['id'],
+                                    amount=ingredient['amount'])
         for tag in tags:
-            current_tag, status = Tag.objects.get_or_create(**tag)
-            RecipeTag.objects.create(recipe=recipe, tag=current_tag)
+            RecipeTag.objects.create(recipe=recipe, tag=tag)
         return recipe
-
-         # def create(self, validated_data):
-    #     ingredients = validated_data.pop('ingredients')
-    #     tags = validated_data.pop('tags')
-    #     recipe = Recipe.objects.create(**validated_data)
-    #     for ingredient in ingredients:
-    #         print(ingredient)
-    #         current_data, status = Ingredient.objects.get_or_create(**ingredient)
-    #         RecipeIngredient.objects.create(recipe=recipe, ingredient=current_data)
-    #     for tag in tags:
-    #         current_tag, status = Tag.objects.get_or_create(**tag)
-    #         RecipeTag.objects.create(recipe=recipe, tag=current_tag)
-        # return recipe
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     
     tags = TagSerializer(many=True, read_only=True)
-    author = UserSerializer()
+    author = CustomUserSerializer()
     ingredients = IngredientSerializer(many=True, read_only=True)
+    is_favorited = serializers.SerializerMethodField(source='get_favorite')
     class Meta:
         model = Recipe
         fields = ('tags', 'id', 'name', 'author', 'image', 'text',
-                 'cooking_time', 'ingredients')
+                 'cooking_time', 'ingredients', 'is_favorited')
+
+    @staticmethod
+    def get_favorite(obj):
+        return getattr(obj, 'is_favorited', False)
 
 
 class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = '__all__'
 
 
