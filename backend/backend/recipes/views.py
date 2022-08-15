@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from .serializers import (FollowSerializer, RecipeCreateSerializer,
                          RecipeReadSerializer, TagSerializer,
-                         IngredientSerializer, IngredientReadSerializer,
+                         IngredientSerializer,
                          TagSerializer, CustomUserSerializer)
 from .models import Follow, Recipe, Ingredient, Tag
 from users.models import CustomUser
@@ -59,10 +59,10 @@ class IngredientViewset(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all().order_by('pk')
     serializer_class = IngredientSerializer
 
-    def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH', 'DELETE'):
-            return IngredientSerializer
-        return IngredientReadSerializer
+    # def get_serializer_class(self):
+    #     if self.request.method in ('POST', 'PATCH', 'DELETE'):
+    #         return IngredientSerializer
+    #     return IngredientReadSerializer
 
 
 class TagViewset(viewsets.ModelViewSet):

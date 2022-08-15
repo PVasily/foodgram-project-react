@@ -47,18 +47,11 @@ class ColorFieldSerializer(serializers.Field):
 
 # -------------------- Ingredients--------------------------------
 
-class IngredientReadSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Ingredient
-        fields = ('name', 'measurement_unit', 'id')
-
-
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ('name', 'measurement_unit', 'amount')
+        fields = ('name', 'measurement_unit', 'id')
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
