@@ -108,11 +108,11 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = 'users.CustomUser'
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    'SERIALIZERS': {
-        'user_create': 'users.serializers.UserProfileCreateSerializer',
-        'user': 'users.serializers.UserProfileSerializer',
-        'current_user': 'users.serializers.UserProfileSerializer',
-    },
+    # 'SERIALIZERS': {
+    #     'user_create': 'users.serializers.UserProfileCreateSerializer',
+    #     'user': 'users.serializers.UserProfileSerializer',
+    #     'current_user': 'users.serializers.UserProfileSerializer',
+    # },
     'PERMISSIONS': {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
         'user_list': ['djoser.permissions.CurrentUserOrAdminOrReadOnly']

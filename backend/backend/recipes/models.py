@@ -4,9 +4,11 @@ from django.contrib.auth import get_user_model
 from datetime import datetime
 
 from core.validators import cooking_time_validator
+from users.models import CustomUser
 
 
-User = get_user_model()
+# User = get_user_model()
+
 
 CHOICE_UNIT = (
     ('gram', 'г'),
@@ -46,9 +48,9 @@ class Tag(models.Model):
 class Recipe(models.Model):
     """Рецепт пользователя."""
     tags = models.ManyToManyField(Tag, through='RecipeTag')
-    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
+    ingredients = models.ManyToManyField('RecipeIngredient', related_name='recipe_ingredient')
     name = models.CharField('Название', blank=True, unique=True, max_length=255)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     image = models.ImageField('Изображение', null=True, blank=True, upload_to='recipes/images/')
     text = models.TextField('Описание рецепта', blank=True)
     cooking_time = models.IntegerField(
@@ -85,16 +87,16 @@ class RecipeIngredient(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(
-        User,
+        CustomUser,
         related_name='follower',
         on_delete=models.CASCADE
     )
     author = models.ForeignKey(
-        User,
+        CustomUser,
         related_name='following',
         on_delete=models.CASCADE
     )
 
 class FavoriteRecipe(models.Model):
-    user = models.ForeignKey(User, related_name='favorites', on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, related_name='favorites', on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, related_name='fav_recipes', on_delete=models.CASCADE)
