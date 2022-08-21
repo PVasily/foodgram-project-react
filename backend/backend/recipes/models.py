@@ -1,12 +1,9 @@
+from tabnanny import verbose
 from django.db import models
 
 from users.models import User
 
 from core.validators import cooking_time_validator
-from users.models import CustomUser
-
-
-# User = get_user_model()
 
 
 CHOICE_UNIT = (
@@ -88,27 +85,39 @@ class RecipeIngredient(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(
-        CustomUser,
+        User,
         related_name='follower',
         on_delete=models.CASCADE
     )
     author = models.ForeignKey(
-        CustomUser,
+        User,
         related_name='following',
         on_delete=models.CASCADE
     )
 
 
-class Favorite(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-
-
 class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    recipes = models.ManyToManyField(Recipe, related_name='cart_recipes')
+    user = models.ForeignKey(User, related_name='cart_recipes', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='cart_recipes', on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique cart'),
+        )
 
 
-# class CartRecipe(models.Model):
-#     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-#     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+class Favorite(models.Model):
+    user = models.ForeignKey(User, related_name='favorite_recipes', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='favorite_recipes', on_delete=models.CASCADE)
+    is_favorite = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Избранное'
+        constraints = (
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique favorite'),
+        )
+
+    def __str__(self):
+        return f'Пользователь {self.user} добавил в избранное {self.recipe}'
