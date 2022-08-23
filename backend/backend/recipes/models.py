@@ -6,24 +6,23 @@ from users.models import User
 from core.validators import cooking_time_validator
 
 
-CHOICE_UNIT = (
-    ('gram', 'г'),
-    ('item', 'шт'),
-    ('tablespoon', 'ст. л.'),
-    ('mililiter', 'мл'),
-    ('tea_spoon', 'ч. л.'),
-    ('pinch', 'щепотка'),
-    ('taste', 'по вкусу'),
-    ('drop', 'капля')
-)
+# CHOICE_UNIT = (
+#     ('gram', 'г'),
+#     ('item', 'шт'),
+#     ('tablespoon', 'ст. л.'),
+#     ('mililiter', 'мл'),
+#     ('tea_spoon', 'ч. л.'),
+#     ('pinch', 'щепотка'),
+#     ('taste', 'по вкусу'),
+#     ('drop', 'капля')
+# )
 
 
 class Ingredient(models.Model):
     name = models.CharField('Название ингредиента', max_length=255)
     measurement_unit = models.CharField(
         'Единица измерения',
-        max_length=255,
-        choices=CHOICE_UNIT
+        max_length=255
         )
 
     def __str__(self):
@@ -120,4 +119,4 @@ class Favorite(models.Model):
         )
 
     def __str__(self):
-        return f'Пользователь {self.user} добавил в избранное {self.recipe}'
+        return f'{self.recipe}'

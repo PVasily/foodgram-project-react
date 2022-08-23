@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from recipes.models import Follow
 from djoser.serializers import UserCreateSerializer
 
@@ -18,7 +19,7 @@ class UserSerializer(UserCreateSerializer):
 
 
 class UserProfileSerializer(UserSerializer):
-    
+
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
