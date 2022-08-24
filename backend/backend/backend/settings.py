@@ -4,8 +4,6 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-
 SECRET_KEY = 'tmc2qbpl^oz2p*3a!s%x@8r7b+rk=eyg=0pkzf=hkd6i68ojou'
 
 DEBUG = True
@@ -23,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-
+    'django_filters',
     'rest_framework.authtoken',
 
     'djoser',

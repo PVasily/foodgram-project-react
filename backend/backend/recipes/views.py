@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.db.models import Sum
 
 from rest_framework import viewsets, status, mixins, generics
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,12 +12,13 @@ from rest_framework.pagination import LimitOffsetPagination, PageNumberPaginatio
 
 from users.models import User
 
-from .serializers import (RecipeCreateSerializer, RecipeForCartAndFavoriteSerializer,
-                         RecipeReadSerializer, SubcriptionRecipeSerializer, SubscriptionGetSerializer, SubscriptionSerializer, TagSerializer,
-                         IngredientSerializer,
-                         TagSerializer)
+from .serializers import (RecipeCreateSerializer, LightRecipeSerializer,
+        RecipeReadSerializer, SubscriptionGetSerializer, TagSerializer,
+        IngredientSerializer, TagSerializer
+)
 from .models import Cart, Favorite, Follow, Recipe, Ingredient, RecipeIngredient, Tag
 from core.permissions import ReadOnly
+from core.filters import RecipeFilter, IngredientFilter
 from users.serializers import UserSerializer
 
 
@@ -37,9 +39,11 @@ class MainPageViewset(viewsets.ModelViewSet):
 class RecipeViewset(viewsets.ModelViewSet):
     queryset = Recipe.objects.all().order_by('pk')
     permission_classes = [IsAuthenticated | ReadOnly]
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = RecipeFilter
+    filterset_fields = ('is_favorited',)
 
     def get_serializer_class(self):
-        print('STEP 2')
         if self.request.method in ('POST', 'PATCH', 'DELETE'):
             return RecipeCreateSerializer
         return RecipeReadSerializer
@@ -77,6 +81,8 @@ class RecipeViewset(viewsets.ModelViewSet):
 class IngredientViewset(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all().order_by('pk')
     serializer_class = IngredientSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = IngredientFilter
 
 
 class TagViewset(viewsets.ModelViewSet):
@@ -86,7 +92,7 @@ class TagViewset(viewsets.ModelViewSet):
 
 class CartViewset(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
-    serializer_class = RecipeForCartAndFavoriteSerializer
+    serializer_class = LightRecipeSerializer
 
     @action(detail=True, methods=['POST', 'DELETE'], url_path='shopping_cart')
     def shopping_cart(self, request, pk):
@@ -99,7 +105,7 @@ class CartViewset(viewsets.ModelViewSet):
             if recipe_in_favorite.exists():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             Cart.objects.create(user=current_user, recipe=recipe)
-            serializer = RecipeForCartAndFavoriteSerializer(recipe)
+            serializer = LightRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             if not recipe_in_favorite.exists():
@@ -109,13 +115,16 @@ class CartViewset(viewsets.ModelViewSet):
 
 
 class ListCartViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeForCartAndFavoriteSerializer
+    serializer_class = LightRecipeSerializer
 
     def get_queryset(self):
         user = self.request.user
         recipes_in_cart = Cart.objects.filter(user=user)
         queryset = [recipe.recipe for recipe in recipes_in_cart]
         return queryset
+
+
+class DownloadCartListViewset(ListCartViewSet):
 
     @action(detail=False, methods=['get'],
     url_path='download_shopping_cart',
@@ -143,43 +152,9 @@ class ListCartViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = 'attachment; filename="Cart.txt"'
         return response
 
-    # @action(
-    #     detail=False,
-    #     methods=['get']
-    # )
-    # def shopping_cart(self, request):
-    #     user = request.user
-    #     print(user)
-    #     recipes = Cart.objects.filter(user=user)
-    #     return recipes
-
-    # @action(
-    #     detail=True,
-    #     methods=['post']
-    # )
-    # def shopping_cart(self, request, pk=None):
-    #     print(request.data)
-    
-    # def get_serializer_class(self):
-    #     if self.request.method == 'GET':
-    #         return CartReadSerializer
-    #     return CartWriteSerializer
-
-    # def perform_create(self, serializer):
-    #     serializer.save(user=self.request.user)
-
-    # def create(self, request, *args, **kwargs):
-    #     if request.method == 'GET':
-    #         recipes = get_object_or_404(Recipe, author=request.user)
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     serializer = CartRecipeWriteSerializer(instance=serializer.instance)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 class FavoriteViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeForCartAndFavoriteSerializer
+    serializer_class = LightRecipeSerializer
 
     @action(detail=True, methods=['POST', 'DELETE'], url_path='favorited')
     def favorite(self, request, pk):
@@ -192,7 +167,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
             if recipe_in_favorite.exists():
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             Favorite.objects.create(user=current_user, recipe=recipe)
-            serializer = RecipeForCartAndFavoriteSerializer(recipe)
+            serializer = LightRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             if not recipe_in_favorite.exists():
@@ -202,54 +177,23 @@ class FavoriteViewSet(viewsets.ModelViewSet):
 
 
 class ListFavoriteViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeForCartAndFavoriteSerializer
+    serializer_class = LightRecipeSerializer
 
     def get_queryset(self):
         user = self.request.user
         favorites = Favorite.objects.filter(user=user)
         queryset = [favorite.recipe for favorite in favorites]
         return queryset
-    
 
-    # @action(detail=False, methods=['GET'], url_path='favorites')
-    # def favorites(self, request):
-    #     print('hello')
-    #     current_user = self.request.user
-    #     if current_user.is_anonymous:
-    #         return Response(status=status.HTTP_401_UNAUTHORIZED)
-    #     favorites = current_user.favorite_recipes.all()
-    #     serializer = FavoriteRecipeSerializer(favorites)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-
-    # def get_queryset(self):
-    #     print(self.context['request'].method)
-    #     print(self.kwargs.get('id'))
-    #     recipes_id = self.kwargs.get('id')
-    #     recipes = get_object_or_404(Recipe, pk=recipes_id)
-    #     queryset = recipes.favorite_recipes.all()
-    #     return queryset
-
-    # def perform_create(self, serializer):
-
-    #     recipe_id = self.kwargs.get('id')
-    #     recipe = get_object_or_404(Recipe, id=recipe_id)
-    #     exist=Favorite.objects.filter(
-    #         recipe=recipe,
-    #         user=self.request.user,
-    #         is_favorite=True
-    #     ).exists()
-    #     if self.request.user != recipe.author and exist != True:
-    #         return Response(serializer.save(user=self.request.user, recipe=recipe, is_favorite=True), status=status.HTTP_200_OK)
-    #     return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    # @action(detail=True, methods=['delete'])
-    # def favorite(self, request, pk=None):
-    #     Favorite.objects.get(recipe__id=pk).delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return UserSerializer
+        return SubscriptionGetSerializer
 
     @action(
         detail=False,
@@ -269,8 +213,8 @@ class SubscUserViewSet(UserViewset):
 
     @action(
         detail=False,
-        methods=['GET'],
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
+        url_path='subscriptions'
     )
     def subscriptions(self, request):
         print('HELLO')
@@ -364,3 +308,77 @@ class ProfileViewset(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
 #     permission_classes = (IsAuthenticated,)
 #     serializer_class = UserFollowSerializer
 #     queryset = Follow.objects.all()
+# --------------------------achive-------------------------------
+
+ # @action(detail=False, methods=['GET'], url_path='favorites')
+    # def favorites(self, request):
+    #     print('hello')
+    #     current_user = self.request.user
+    #     if current_user.is_anonymous:
+    #         return Response(status=status.HTTP_401_UNAUTHORIZED)
+    #     favorites = current_user.favorite_recipes.all()
+    #     serializer = FavoriteRecipeSerializer(favorites)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # def get_queryset(self):
+    #     print(self.context['request'].method)
+    #     print(self.kwargs.get('id'))
+    #     recipes_id = self.kwargs.get('id')
+    #     recipes = get_object_or_404(Recipe, pk=recipes_id)
+    #     queryset = recipes.favorite_recipes.all()
+    #     return queryset
+
+    # def perform_create(self, serializer):
+
+    #     recipe_id = self.kwargs.get('id')
+    #     recipe = get_object_or_404(Recipe, id=recipe_id)
+    #     exist=Favorite.objects.filter(
+    #         recipe=recipe,
+    #         user=self.request.user,
+    #         is_favorite=True
+    #     ).exists()
+    #     if self.request.user != recipe.author and exist != True:
+    #         return Response(serializer.save(user=self.request.user, recipe=recipe, is_favorite=True), status=status.HTTP_200_OK)
+    #     return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    # @action(detail=True, methods=['delete'])
+    # def favorite(self, request, pk=None):
+    #     Favorite.objects.get(recipe__id=pk).delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+    # @action(
+    #     detail=False,
+    #     methods=['get']
+    # )
+    # def shopping_cart(self, request):
+    #     user = request.user
+    #     print(user)
+    #     recipes = Cart.objects.filter(user=user)
+    #     return recipes
+
+    # @action(
+    #     detail=True,
+    #     methods=['post']
+    # )
+    # def shopping_cart(self, request, pk=None):
+    #     print(request.data)
+    
+    # def get_serializer_class(self):
+    #     if self.request.method == 'GET':
+    #         return CartReadSerializer
+    #     return CartWriteSerializer
+
+    # def perform_create(self, serializer):
+    #     serializer.save(user=self.request.user)
+
+    # def create(self, request, *args, **kwargs):
+    #     if request.method == 'GET':
+    #         recipes = get_object_or_404(Recipe, author=request.user)
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     serializer = CartRecipeWriteSerializer(instance=serializer.instance)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)

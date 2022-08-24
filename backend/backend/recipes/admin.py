@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Favorite, Recipe, Tag, Ingredient
+from .models import Favorite, Recipe, RecipeIngredient, RecipeTag, Tag, Ingredient
+
+
+class RecipeIngredientAdmin(admin.TabularInline):
+    model = RecipeIngredient
+
+
+class RecipeTagAdmin(admin.TabularInline):
+    model = RecipeTag
 
 
 @admin.register(Recipe)
@@ -8,6 +16,7 @@ class RecipeAdmin(admin.ModelAdmin):
                    'cooking_time', 'tags', 'ingredients')
     search_fields = ('name',)
     list_filter = ('author',)
+    inlines = [RecipeIngredientAdmin, RecipeTagAdmin]
 
 
     def ingredients(self, obj):

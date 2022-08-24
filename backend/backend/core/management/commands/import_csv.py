@@ -1,15 +1,21 @@
+import os
+
 from django.core.management.base import BaseCommand
 
 import csv
 
+from backend.settings import BASE_DIR
 from recipes.models import Ingredient
+
+p = os.path.dirname(os.path.dirname(BASE_DIR))
+path = os.path.join(p, 'data', 'ingredients.csv')
 
 class Command(BaseCommand):
     help = 'Displays current time'
 
     def handle(self, *args, **kwargs):
 
-        with open('C:\\Dev\\foodgram-project-react\\data\\ingredients.csv', encoding='utf-8') as f:
+        with open(path, encoding='utf-8') as f:
                 reader = csv.reader(f)
                 for row in reader:
                  _, created = Ingredient.objects.get_or_create(
