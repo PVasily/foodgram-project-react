@@ -6,14 +6,16 @@ from .views import (CartViewset, DownloadCartListViewset, FavoriteViewSet,
                     ListCartViewSet, ListFavoriteViewSet, ProfileViewset,
                     RecipeViewset,
                     IngredientViewset, SubscUserViewSet,
-                    TagViewset, MainPageViewset, UserViewset
+                    TagViewset,
+                    # MainPageViewset,
+                    UserViewset
                     )
 # from users.views import UserViewset
 
 print('STEP 1')
 router = DefaultRouter()
 
-router.register('', MainPageViewset)
+# router.register('', MainPageViewset)
 router.register('recipes', RecipeViewset)
 router.register('ingredients', IngredientViewset)
 router.register('users', UserViewset)
@@ -32,8 +34,9 @@ app_name = 'recipes'
 
 urlpatterns = [
     path('', include(router.urls)),
-    # path('api-token-auth/', views.obtain_auth_token),
     path(r'auth/', include('djoser.urls')),
     path(r'auth/', include('djoser.urls.authtoken')),
     # path(r'auth/', include('djoser.urls.jwt')),
 ]
+
+# path('api-token-auth/', views.obtain_auth_token),

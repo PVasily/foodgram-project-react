@@ -1,27 +1,15 @@
-from backend.settings import BASE_DIR
 from users.models import User
 from rest_framework import serializers, status
 
+from drf_extra_fields.fields import Base64ImageField
+
 import webcolors
 
-import base64
-
-from django.core.files.base import ContentFile
-
-from .models import Cart, Favorite, Follow, Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag
+from .models import (
+    Cart, Favorite, Follow, Ingredient,
+    Recipe, RecipeIngredient, Tag
+)
 from users.serializers import UserProfileSerializer, UserSerializer
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, basestring) and data.startswith('data:image'):
-            # base64 encoded image - decode
-            format, imgstr = data.split(';base64,')  # format ~= data:image/X,
-            ext = format.split('/')[-1]  # guess file extension
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super(Base64ImageField, self).to_internal_value(data)
 
 
 class ColorFieldSerializer(serializers.Field):
@@ -53,26 +41,6 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-# class IRRS(serializers.ModelSerializer):
-
-#     name = serializers.SerializerMethodField()
-#     measurement_unit = serializers.SerializerMethodField()
-#     id = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = RecipeIngredient
-#         fields = ('name', 'measurement_unit', 'id', 'amount')
-
-#     def get_name(self, obj):
-#         return obj.ingredient.name
-
-#     def get_measurement_unit(self, obj):
-#         return obj.ingredient.measurement_unit
-
-#     def get_id(self, obj):
-#         return obj.ingredient.id
-
-
 class TagSerializer(serializers.ModelSerializer):
 
     color = ColorFieldSerializer()
@@ -92,6 +60,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True
     )
+    # image = Base64ImageField()
     ingredients = IngredientRecipeSerializer(many=True)
 
     class Meta:
@@ -112,8 +81,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                            amount=ingredient['amount']
             ) for ingredient in ingredients]
         )
-   
+
     def create(self, validated_data):
+        print('CREATE')
         validated_data['author'] = self.context['request'].user
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -123,9 +93,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        print(instance)
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         tags = validated_data.get('tags')
-        print(validated_data)
         self.create_tags(tags, instance)
         ingredients = validated_data.get('ingredients')
         self.create_ingredients(ingredients, instance)
@@ -178,7 +148,7 @@ class IngredientRecipeReadSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     measurement_unit = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
@@ -193,28 +163,22 @@ class IngredientRecipeReadSerializer(serializers.ModelSerializer):
         return obj.ingredient.measurement_unit
 
 
-
 class RecipeReadSerializer(serializers.ModelSerializer):
-    
+
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer()
-    ingredients = IngredientRecipeReadSerializer(source='recipe_ing', many=True, read_only=True)
+    ingredients = IngredientRecipeReadSerializer(
+        source='recipe_ing', many=True, read_only=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('tags', 'id', 'name', 'author', 'image', 'text',
-                 'cooking_time', 'ingredients', 'is_favorited', 'is_in_shopping_cart')
+                  'cooking_time', 'ingredients', 'is_favorited',
+                  'is_in_shopping_cart')
 
-    # def get_is_favorited(self, obj):
-    #     print(self.context)
-    #     return getattr(obj, 'is_favorited', False)
-
-    # def get_is_in_shopping_cart(self, obj):
-    #     return getattr(obj, 'is_in_shopping_cart', False)
-
-# -------------- need to test ---------------------
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         if user.is_anonymous:
@@ -234,8 +198,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return recipe_in_cart.exists()
 
 
-# ------------------FAVORITE-------------------------------------------
-
 class LightRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -243,17 +205,14 @@ class LightRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time',)
 
 
-# class SubcriptionRecipeSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Recipe
-#         fields = ('id', 'name', 'image', 'cooking_time',)
-
-
 class UserSubscrSerializer(UserProfileSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'id', 'email', 'first_name', 'last_name', 'is_subscribed')
+        fields = (
+            'username', 'id', 'email', 'first_name',
+            'last_name', 'is_subscribed'
+        )
 
 
 class SubscriptionSerializer(UserSubscrSerializer):
@@ -262,7 +221,10 @@ class SubscriptionSerializer(UserSubscrSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'is_subscribed', 'recipes', 'recipes_count')
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        )
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -273,7 +235,10 @@ class UserGetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id','email', 'username', 'first_name', 'last_name', 'is_subscribed')
+        fields = (
+            'id', 'email', 'username', 'first_name',
+            'last_name', 'is_subscribed'
+        )
 
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
@@ -289,7 +254,7 @@ class SubscriptionGetSerializer(UserGetSerializer):
         fields = UserGetSerializer.Meta.fields + ('recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        return(Recipe.objects.filter(author=obj))
+        return (Recipe.objects.filter(author=obj))
 
     def get_recipes_count(self, obj):
         return (Recipe.objects.filter(author=obj).count())
@@ -310,8 +275,7 @@ class SubscriptionGetSerializer(UserGetSerializer):
         return attrs
 
 
-class FollowSerializer(SubscriptionGetSerializer):
-    pass
+# ------------------------------------------------------------------------
     # is_subscribed = serializers.SerializerMethodField()
 
     # def get_is_subscribed(self, obj):
@@ -323,3 +287,30 @@ class FollowSerializer(SubscriptionGetSerializer):
     #     )
     #     return is_subscribe.exists()
 
+    # class IRRS(serializers.ModelSerializer):
+#     name = serializers.SerializerMethodField()
+#     measurement_unit = serializers.SerializerMethodField()
+#     id = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = RecipeIngredient
+#         fields = ('name', 'measurement_unit', 'id', 'amount')
+
+#     def get_name(self, obj):
+#         return obj.ingredient.name
+
+#     def get_measurement_unit(self, obj):
+#         return obj.ingredient.measurement_unit
+
+#     def get_id(self, obj):
+#         return obj.ingredient.id
+
+
+# def get_is_favorited(self, obj):
+    #     print(self.context)
+    #     return getattr(obj, 'is_favorited', False)
+
+    # def get_is_in_shopping_cart(self, obj):
+    #     return getattr(obj, 'is_in_shopping_cart', False)
+
+# -------------- need to test ---------------------

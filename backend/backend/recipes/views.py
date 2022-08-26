@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
 
 from users.models import User
@@ -17,8 +17,8 @@ from .serializers import (RecipeCreateSerializer, LightRecipeSerializer,
         IngredientSerializer, TagSerializer
 )
 from .models import Cart, Favorite, Follow, Recipe, Ingredient, RecipeIngredient, Tag
-from core.permissions import ReadOnly
-from core.filters import RecipeFilter, IngredientFilter
+from core.permissions import IsAuthOrReadOnly, IsAuthOrAdmin, IsAuthAndAuthorOrReadOnly
+from core.filters import RecipeFilter, IngredientFilter, RecipeFilterMainPage
 from users.serializers import UserSerializer
 
 
@@ -30,57 +30,32 @@ class CreateDestroyViewSet(
     pass
 
 
-class MainPageViewset(viewsets.ModelViewSet):
-    serializer_class = RecipeReadSerializer
-    queryset = Recipe.objects.all().order_by('-pub_date')
-    pagination_class = PageNumberPagination
+# class MainPageViewset(viewsets.ModelViewSet):
+#     serializer_class = RecipeReadSerializer
+#     queryset = Recipe.objects.all().order_by('-pub_date')
+#     filter_backends = (DjangoFilterBackend,)
+#     filter_class = RecipeFilterMainPage
+#     permission_classes = (IsAuthOrReadOnly,)
+#     pagination_class = PageNumberPagination
 
 
 class RecipeViewset(viewsets.ModelViewSet):
     queryset = Recipe.objects.all().order_by('pk')
-    permission_classes = [IsAuthenticated | ReadOnly]
+    permission_classes = [IsAuthAndAuthorOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filter_class = RecipeFilter
-    filterset_fields = ('is_favorited',)
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH', 'DELETE'):
+            print('Hi')
             return RecipeCreateSerializer
         return RecipeReadSerializer
-
-    # def perform_create(self, serializer):
-    #     serializer.save(author=self.request.user)
-
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     serializer = RecipeReadSerializer(instance=serializer.instance)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # @staticmethod
-    # def add_to_cart(request, pk, serializers):
-    #     user = request.user
-    #     recipe = Recipe.objects.get(id=pk)
-    #     Cart.objects.create(user=user, recipe=recipe)
-    #     return Response(serializers.data)
-
-    # @action(detail=True, methods=["POST"],
-    #         permission_classes=[IsAuthenticated])
-    # def shopping_cart(self, request, pk):
-    #     user = request.user
-    #     recipe = Recipe.objects.get(id=pk)
-    #     # Cart.objects.create(user=user, recipe=recipe)
-    #     serializer = CartWriteSerializer(instance=serializer.instance) 
-    #     return Response(serializer.data)
-    #     # print(request.user)
-    #     # return self.add_to_cart(
-    #     #     request=request, pk=pk, serializers=CartRecipeWriteSerializer)
 
 
 class IngredientViewset(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all().order_by('pk')
     serializer_class = IngredientSerializer
+    permission_classes = (IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
     filter_class = IngredientFilter
 
@@ -88,13 +63,20 @@ class IngredientViewset(viewsets.ModelViewSet):
 class TagViewset(viewsets.ModelViewSet):
     queryset = Tag.objects.all().order_by('name')
     serializer_class = TagSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class CartViewset(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = LightRecipeSerializer
+    # permission_classes = (IsAuthenticated)
 
-    @action(detail=True, methods=['POST', 'DELETE'], url_path='shopping_cart')
+    @action(
+        detail=True,
+        # permission_classes=(IsAuthOrAdmin),
+        methods=['POST', 'DELETE'],
+        url_path='shopping_cart'
+    )
     def shopping_cart(self, request, pk):
         current_user = self.request.user
         if current_user.is_anonymous:
@@ -116,19 +98,19 @@ class CartViewset(viewsets.ModelViewSet):
 
 class ListCartViewSet(viewsets.ModelViewSet):
     serializer_class = LightRecipeSerializer
+    permission_classes = (IsAuthAndAuthorOrReadOnly,) #--?
 
     def get_queryset(self):
         user = self.request.user
         recipes_in_cart = Cart.objects.filter(user=user)
         queryset = [recipe.recipe for recipe in recipes_in_cart]
+        # queryset = user.recipes.filter(cart_recipes__user=user)
         return queryset
 
 
 class DownloadCartListViewset(ListCartViewSet):
 
-    @action(detail=False, methods=['get'],
-    url_path='download_shopping_cart',
-            permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         shopping_list = {}
         ingredients = RecipeIngredient.objects.filter(
@@ -155,6 +137,7 @@ class DownloadCartListViewset(ListCartViewSet):
 
 class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = LightRecipeSerializer
+    permission_classes = (IsAuthAndAuthorOrReadOnly,) #---?
 
     @action(detail=True, methods=['POST', 'DELETE'], url_path='favorited')
     def favorite(self, request, pk):
@@ -178,11 +161,14 @@ class FavoriteViewSet(viewsets.ModelViewSet):
 
 class ListFavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = LightRecipeSerializer
+    permission_classes = (IsAuthAndAuthorOrReadOnly,) #---?
 
-    def get_queryset(self):
+    def get_queryset(self, ):
         user = self.request.user
-        favorites = Favorite.objects.filter(user=user)
-        queryset = [favorite.recipe for favorite in favorites]
+        recipes_in_cart = Favorite.objects.filter(user=user)
+        queryset = [recipe.recipe for recipe in recipes_in_cart]
+        # queryset = user.recipes.filter(favorite_recipes__user=user)
+        print(queryset)
         return queryset
 
 
@@ -209,17 +195,15 @@ class UserViewset(viewsets.ModelViewSet):
 class SubscUserViewSet(UserViewset):
     queryset = User.objects.all()
     serializer_class = SubscriptionGetSerializer
-    # pagination_class = PageLimitPaginator
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAuthAndAuthorOrReadOnly,) #--?
 
     @action(
         detail=False,
-        permission_classes=(IsAuthenticated,),
         url_path='subscriptions'
     )
     def subscriptions(self, request):
-        print('HELLO')
         user_subscriptions = User.objects.filter(following__user=request.user)
-        print(user_subscriptions)
         serializer = SubscriptionGetSerializer(
             user_subscriptions,
             context=self.get_serializer_context(),
@@ -234,10 +218,7 @@ class SubscUserViewSet(UserViewset):
     )
     def subscribe(self, request, pk=None):
         follower = request.user
-        print(request.data)
-        # following_id = self.kwargs.get('id')
-        following = get_object_or_404(User, id=pk)
-        
+        following = get_object_or_404(User, id=pk) 
         if request.method == 'POST':
             serializer_class = self.get_serializer_class()
             serializer = serializer_class(
@@ -382,3 +363,34 @@ class ProfileViewset(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     #     self.perform_create(serializer)
     #     serializer = CartRecipeWriteSerializer(instance=serializer.instance)
     #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+     # def perform_create(self, serializer):
+    #     serializer.save(author=self.request.user)
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     serializer = RecipeReadSerializer(instance=serializer.instance)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # @staticmethod
+    # def add_to_cart(request, pk, serializers):
+    #     user = request.user
+    #     recipe = Recipe.objects.get(id=pk)
+    #     Cart.objects.create(user=user, recipe=recipe)
+    #     return Response(serializers.data)
+
+    # @action(detail=True, methods=["POST"],
+    #         permission_classes=[IsAuthenticated])
+    # def shopping_cart(self, request, pk):
+    #     user = request.user
+    #     recipe = Recipe.objects.get(id=pk)
+    #     # Cart.objects.create(user=user, recipe=recipe)
+    #     serializer = CartWriteSerializer(instance=serializer.instance) 
+    #     return Response(serializer.data)
+    #     # print(request.user)
+    #     # return self.add_to_cart(
+    #     #     request=request, pk=pk, serializers=CartRecipeWriteSerializer)

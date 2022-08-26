@@ -1,21 +1,8 @@
-from tabnanny import verbose
 from django.db import models
 
 from users.models import User
 
 from core.validators import cooking_time_validator
-
-
-# CHOICE_UNIT = (
-#     ('gram', 'г'),
-#     ('item', 'шт'),
-#     ('tablespoon', 'ст. л.'),
-#     ('mililiter', 'мл'),
-#     ('tea_spoon', 'ч. л.'),
-#     ('pinch', 'щепотка'),
-#     ('taste', 'по вкусу'),
-#     ('drop', 'капля')
-# )
 
 
 class Ingredient(models.Model):
@@ -44,19 +31,28 @@ class Tag(models.Model):
 class Recipe(models.Model):
     """Рецепт пользователя."""
     tags = models.ManyToManyField(Tag, through='RecipeTag')
-    name = models.CharField('Название', blank=True, unique=True, max_length=255)
-    author = models.ForeignKey(User, related_name='recipes', on_delete=models.CASCADE)
-    image = models.ImageField('Изображение', null=True, blank=True, upload_to='recipes/images/')
+    name = models.CharField(
+                            'Название',
+                            blank=True,
+                            unique=True,
+                            max_length=255
+    )
+    author = models.ForeignKey(
+                               User,
+                               related_name='recipes',
+                               on_delete=models.CASCADE
+    )
+    image = models.ImageField(
+                              'Изображение',
+                              null=True,
+                              blank=True,
+                              upload_to='recipes/images/'
+    )
     text = models.TextField('Описание рецепта', blank=True)
     cooking_time = models.IntegerField(
         'Время приготовления',
         validators=[cooking_time_validator]
         )
-    # ingredients = models.ManyToManyField(
-    #     'RecipeIngredient',
-    #     related_name='recipe_ingredients',
-    #     verbose_name='Ингредиенты',
-    #     )
     is_favorited = models.BooleanField(default=False)
     is_in_shopping_cart = models.BooleanField(default=False)
     pub_date = models.DateTimeField(
@@ -74,8 +70,16 @@ class RecipeTag(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, related_name='recipe_ing', on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, related_name='ingredient', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+                               Recipe,
+                               related_name='recipe_ing',
+                               on_delete=models.CASCADE
+    )
+    ingredient = models.ForeignKey(
+                                   Ingredient,
+                                   related_name='ingredient',
+                                   on_delete=models.CASCADE
+    )
     amount = models.FloatField('Количество', max_length=10)
 
     def __str__(self):
@@ -96,8 +100,16 @@ class Follow(models.Model):
 
 
 class Cart(models.Model):
-    user = models.ForeignKey(User, related_name='cart_recipes', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='cart_recipes', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+                             User,
+                             related_name='cart_recipes',
+                             on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+                               Recipe,
+                               related_name='cart_recipes',
+                               on_delete=models.CASCADE
+    )
 
     class Meta:
         constraints = (
@@ -107,8 +119,16 @@ class Cart(models.Model):
 
 
 class Favorite(models.Model):
-    user = models.ForeignKey(User, related_name='favorite_recipes', on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, related_name='favorite_recipes', on_delete=models.CASCADE)
+    user = models.ForeignKey(
+                             User,
+                             related_name='favorite_recipes',
+                             on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+                               Recipe,
+                               related_name='favorite_recipes',
+                               on_delete=models.CASCADE
+    )
     is_favorite = models.BooleanField(default=False)
 
     class Meta:
