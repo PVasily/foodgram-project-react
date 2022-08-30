@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import (Favorite, Recipe, RecipeIngredient,
-                     RecipeTag, Tag, Ingredient)
+
+from .models import (Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
+                     RecipeTag, Tag)
 
 
 class RecipeIngredientAdmin(admin.TabularInline):
@@ -20,8 +21,7 @@ class QtyIsFavoritedRecipe(admin.TabularInline):
 
     def qty(self, obj):
         recipe = Recipe.objects.get(name=obj)
-        qty = recipe.favorite_recipes.filter(recipe=recipe).count()
-        return qty
+        return recipe.favorite_recipes.filter(recipe=recipe).count()
 
 
 @admin.register(Recipe)
@@ -58,3 +58,8 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'measurement_unit')
     list_filter = ('name', )
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('user', 'author')

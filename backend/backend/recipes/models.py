@@ -1,8 +1,6 @@
-from django.db import models
-
-from users.models import User
-
 from core.validators import cooking_time_validator
+from django.db import models
+from users.models import User
 
 
 class Ingredient(models.Model):
@@ -10,7 +8,7 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(
         'Единица измерения',
         max_length=255
-        )
+    )
 
     def __str__(self):
         return self.name
@@ -32,27 +30,27 @@ class Recipe(models.Model):
     """Рецепт пользователя."""
     tags = models.ManyToManyField(Tag, through='RecipeTag')
     name = models.CharField(
-                            'Название',
-                            blank=True,
-                            unique=True,
-                            max_length=255
+        'Название',
+        blank=True,
+        unique=True,
+        max_length=255
     )
     author = models.ForeignKey(
-                               User,
-                               related_name='recipes',
-                               on_delete=models.CASCADE
+        User,
+        related_name='recipes',
+        on_delete=models.CASCADE
     )
     image = models.ImageField(
-                              'Изображение',
-                              null=True,
-                              blank=True,
-                              upload_to='recipes/images/'
+        'Изображение',
+        null=True,
+        blank=True,
+        upload_to='recipes/images/'
     )
     text = models.TextField('Описание рецепта', blank=True)
     cooking_time = models.IntegerField(
         'Время приготовления',
         validators=[cooking_time_validator]
-        )
+    )
     is_favorited = models.BooleanField(default=False)
     is_in_shopping_cart = models.BooleanField(default=False)
     pub_date = models.DateTimeField(
@@ -71,14 +69,14 @@ class RecipeTag(models.Model):
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-                               Recipe,
-                               related_name='recipe_ing',
-                               on_delete=models.CASCADE
+        Recipe,
+        related_name='recipe_ing',
+        on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(
-                                   Ingredient,
-                                   related_name='ingredient',
-                                   on_delete=models.CASCADE
+        Ingredient,
+        related_name='ingredient',
+        on_delete=models.CASCADE
     )
     amount = models.FloatField('Количество', max_length=10)
 
@@ -101,14 +99,14 @@ class Follow(models.Model):
 
 class Cart(models.Model):
     user = models.ForeignKey(
-                             User,
-                             related_name='cart_recipes',
-                             on_delete=models.CASCADE
+        User,
+        related_name='cart_recipes',
+        on_delete=models.CASCADE
     )
     recipe = models.ForeignKey(
-                               Recipe,
-                               related_name='cart_recipes',
-                               on_delete=models.CASCADE
+        Recipe,
+        related_name='cart_recipes',
+        on_delete=models.CASCADE
     )
 
     class Meta:
@@ -120,14 +118,14 @@ class Cart(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(
-                             User,
-                             related_name='favorite_recipes',
-                             on_delete=models.CASCADE
+        User,
+        related_name='favorite_recipes',
+        on_delete=models.CASCADE
     )
     recipe = models.ForeignKey(
-                               Recipe,
-                               related_name='favorite_recipes',
-                               on_delete=models.CASCADE
+        Recipe,
+        related_name='favorite_recipes',
+        on_delete=models.CASCADE
     )
     is_favorite = models.BooleanField(default=False)
 

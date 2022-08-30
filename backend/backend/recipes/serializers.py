@@ -1,15 +1,11 @@
-from users.models import User
-from rest_framework import serializers, status
-
-from drf_extra_fields.fields import Base64ImageField
-
 import webcolors
+from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers, status
+from users.models import User
+from users.serializers import UserSerializer
 
-from .models import (
-    Cart, Favorite, Follow, Ingredient,
-    Recipe, RecipeIngredient, Tag
-)
-from users.serializers import UserProfileSerializer, UserSerializer
+from .models import (Cart, Favorite, Follow, Ingredient, Recipe,
+                     RecipeIngredient, Tag)
 
 
 class ColorFieldSerializer(serializers.Field):
@@ -19,10 +15,9 @@ class ColorFieldSerializer(serializers.Field):
 
     def to_internal_value(self, data):
         try:
-            data = webcolors.hex_to_name(data)
+            return webcolors.hex_to_name(data)
         except ValueError:
             raise serializers.ValidationError('Нет цвета с таким именем')
-        return data
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -60,7 +55,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True
     )
-    # image = Base64ImageField()
+    image = Base64ImageField()
     ingredients = IngredientRecipeSerializer(many=True)
 
     class Meta:
@@ -76,14 +71,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create_ingredients(self, ingredients, recipe):
         RecipeIngredient.objects.bulk_create(
             [RecipeIngredient(
-                           ingredient=ingredient['id'],
-                           recipe=recipe,
-                           amount=ingredient['amount']
+                ingredient=ingredient['id'],
+                recipe=recipe,
+                amount=ingredient['amount']
             ) for ingredient in ingredients]
         )
 
     def create(self, validated_data):
-        print('CREATE')
         validated_data['author'] = self.context['request'].user
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -137,7 +131,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         cooking_time = data['cooking_time']
         if int(cooking_time) <= 0:
             raise serializers.ValidationError({
-                'cooking_time': 'Время приготовление должно быть больше нуля!'
+                'cooking_time': 'Время приготовление должно быть больше нуля'
             })
 
         return data
@@ -205,17 +199,7 @@ class LightRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time',)
 
 
-class UserSubscrSerializer(UserProfileSerializer):
-
-    class Meta:
-        model = User
-        fields = (
-            'username', 'id', 'email', 'first_name',
-            'last_name', 'is_subscribed'
-        )
-
-
-class SubscriptionSerializer(UserSubscrSerializer):
+class SubscriptionSerializer(UserSerializer):
     recipes = LightRecipeSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
 
