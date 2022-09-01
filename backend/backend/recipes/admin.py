@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import (Favorite, Follow, Ingredient, Recipe, RecipeIngredient,
-                     RecipeTag, Tag)
+from .models import (Cart, Favorite, Follow, Ingredient, Recipe,
+                     RecipeIngredient, RecipeTag, Tag)
 
 
 class RecipeIngredientAdmin(admin.TabularInline):
@@ -12,27 +12,18 @@ class RecipeTagAdmin(admin.TabularInline):
     model = RecipeTag
 
 
-class QtyIsFavoritedRecipe(admin.TabularInline):
-    model = Favorite
-    fields = ('qty',)
-    readonly_fields = ('qty',)
-    verbose_name_plural = 'Общее количество добавлений в Избранное'
-    can_delete = False
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'author', 'in_favorited')
+    search_fields = ('name',)
+    list_filter = ('author', 'name', 'tags')
+    inlines = [RecipeIngredientAdmin, RecipeTagAdmin]
 
-    def qty(self, obj):
+    def in_favorited(self, obj):
         recipe = Recipe.objects.get(name=obj)
         return recipe.favorite_recipes.filter(recipe=recipe).count()
 
-
-@admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author')
-    search_fields = ('name',)
-    list_filter = ('author', 'name', 'tags')
-    inlines = [RecipeIngredientAdmin, RecipeTagAdmin, QtyIsFavoritedRecipe]
-
     def ingredients(self, obj):
-        print(obj)
         return obj.recipe_ing.all()
 
     def tags(self, obj):
@@ -41,7 +32,6 @@ class RecipeAdmin(admin.ModelAdmin):
 
 class RecipeIngredients(admin.TabularInline):
     model = Recipe.recipe_ing
-    print(Recipe.recipe_ing)
 
 
 class IngredentsInline(admin.TabularInline):
@@ -63,3 +53,13 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ('user', 'author')
+
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
