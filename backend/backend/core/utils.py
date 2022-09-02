@@ -1,8 +1,9 @@
 from django.db.models import Sum
+
 from recipes.models import RecipeIngredient
 
 
-def ingredients_in_list_cart(user):
+def get_shopping_list(user):
     shopping_list = {}
     ingredients = RecipeIngredient.objects.filter(
         recipe__cart_recipes__user=user

@@ -1,7 +1,10 @@
 from django.contrib import admin
+from admin_decorators import short_description
 
-from .models import (Cart, Favorite, Follow, Ingredient, Recipe,
-                     RecipeIngredient, RecipeTag, Tag)
+from .models import (
+    Cart, Favorite, Ingredient, Recipe,
+    RecipeIngredient, RecipeTag, Tag
+)
 
 
 class RecipeIngredientAdmin(admin.TabularInline):
@@ -19,9 +22,10 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientAdmin, RecipeTagAdmin]
 
+    @short_description('Количество добавлений в Избранное')
     def in_favorited(self, obj):
-        recipe = Recipe.objects.get(name=obj)
-        return recipe.favorite_recipes.filter(recipe=recipe).count()
+        return Recipe.objects.filter(favorite_recipes__recipe=obj).count()
+
 
     def ingredients(self, obj):
         return obj.recipe_ing.all()
@@ -48,11 +52,6 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'measurement_unit')
     list_filter = ('name', )
-
-
-@admin.register(Follow)
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'author')
 
 
 @admin.register(Cart)

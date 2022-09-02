@@ -1,14 +1,16 @@
 from django.shortcuts import get_object_or_404
-from recipes.models import Follow
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import User
-from .serializers import (SubscriptionGetSerializer, UserGetSerializer,
-                          UserSerializer)
+from .models import User, Follow
+from .serializers import (
+    SubscriptionGetSerializer,
+    UserGetSerializer,
+    UserSerializer
+)
 
 
 class UserViewset(viewsets.ModelViewSet):

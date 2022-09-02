@@ -7,10 +7,10 @@ app_name = 'users'
 
 router = DefaultRouter()
 
-router.register('users', UserViewset)
+router.register('users', UserViewset, basename='users_actions')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include('djoser.urls')),
-    path(r'auth/', include('djoser.urls.authtoken')),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
 ]

@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient
 
 root_path = os.path.dirname(os.path.dirname(settings.BASE_DIR))

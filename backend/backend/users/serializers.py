@@ -1,9 +1,9 @@
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
-from recipes.models import Follow, Recipe
 from rest_framework import serializers, status
 
-from .models import User
+from recipes.models import Recipe
+from .models import User, Follow
 
 
 class UserSerializer(UserCreateSerializer):

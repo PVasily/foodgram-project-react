@@ -1,6 +1,6 @@
 from core.filters import IngredientFilter, RecipeFilter
 from core.permissions import IsAuthAndAuthorOrReadOnly
-from core.utils import ingredients_in_list_cart
+from core.utils import get_shopping_list
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,7 +18,7 @@ from .serializers import (IngredientSerializer, LightRecipeSerializer,
 
 class RecipeViewset(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthAndAuthorOrReadOnly, IsAdminUser,)
+    permission_classes = (IsAuthAndAuthorOrReadOnly, )
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filter_class = RecipeFilter
@@ -88,9 +88,10 @@ class RecipeViewset(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         user = request.user
-        main_list = ingredients_in_list_cart(user)
+        main_list = get_shopping_list(user)
         response = HttpResponse(main_list, 'Content-Type: text/plain')
         response['Content-Disposition'] = 'attachment; filename="Cart.txt"'
+        # response.write(u'\ufeff'.encode('utf8'))
         return response
 
 

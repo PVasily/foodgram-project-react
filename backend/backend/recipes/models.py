@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
+
 from users.models import User
 
 
@@ -47,6 +48,7 @@ class Recipe(models.Model):
     )
     author = models.ForeignKey(
         User,
+        verbose_name='Автор',
         related_name='recipes',
         on_delete=models.CASCADE
     )
@@ -122,37 +124,41 @@ class RecipeIngredient(models.Model):
         return f'{self.recipe} {self.ingredient}'
 
 
-class Follow(models.Model):
-    user = models.ForeignKey(
-        User,
-        related_name='follower',
-        on_delete=models.CASCADE
-    )
-    author = models.ForeignKey(
-        User,
-        related_name='following',
-        on_delete=models.CASCADE
-    )
+# class Follow(models.Model):
+#     user = models.ForeignKey(
+#         User,
+#         verbose_name='Пользователь',
+#         related_name='follower',
+#         on_delete=models.CASCADE
+#     )
+#     author = models.ForeignKey(
+#         User,
+#         verbose_name='Подписки',
+#         related_name='following',
+#         on_delete=models.CASCADE
+#     )
 
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = (
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='unique follow'
-            ),
-        )
+#     class Meta:
+#         verbose_name = 'Подписка'
+#         verbose_name_plural = 'Подписки'
+#         constraints = (
+#             models.UniqueConstraint(
+#                 fields=['user', 'author'],
+#                 name='unique follow'
+#             ),
+#         )
 
 
 class Cart(models.Model):
     user = models.ForeignKey(
         User,
+        verbose_name='Пользователь',
         related_name='cart_recipes',
         on_delete=models.CASCADE
     )
     recipe = models.ForeignKey(
         Recipe,
+        verbose_name='Рецепт',
         related_name='cart_recipes',
         on_delete=models.CASCADE
     )

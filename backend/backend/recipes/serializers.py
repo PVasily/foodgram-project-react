@@ -1,9 +1,11 @@
 import webcolors
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from users.serializers import UserSerializer
 
-from .models import Cart, Favorite, Ingredient, Recipe, RecipeIngredient, Tag
+from users.serializers import UserSerializer
+from .models import (
+    Cart, Favorite, Ingredient, Recipe, RecipeIngredient, Tag
+)
 
 
 class ColorFieldSerializer(serializers.Field):
