@@ -1,8 +1,9 @@
 from django.contrib import admin
 
-from .models import User
+from .models import Follow, User
 
 
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     model = User
 
@@ -31,4 +32,6 @@ class UserAdmin(admin.ModelAdmin):
     filter_horizontal = ('groups', 'user_permissions',)
 
 
-admin.site.register(User, UserAdmin)
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('user', 'author')

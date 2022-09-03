@@ -1,11 +1,11 @@
 import webcolors
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers, status
-from users.models import User
-from users.serializers import UserSerializer
+from rest_framework import serializers
 
-from .models import (Cart, Favorite, Follow, Ingredient, Recipe,
-                     RecipeIngredient, Tag)
+from users.serializers import UserSerializer
+from .models import (
+    Cart, Favorite, Ingredient, Recipe, RecipeIngredient, Tag
+)
 
 
 class ColorFieldSerializer(serializers.Field):
@@ -64,11 +64,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart')
 
-    def create_tags(self, tags, recipe):
+    @staticmethod
+    def _create_tags(tags, recipe):
         for tag in tags:
             recipe.tags.add(tag)
 
-    def create_ingredients(self, ingredients, recipe):
+    @staticmethod
+    def _create_ingredients(ingredients, recipe):
         RecipeIngredient.objects.bulk_create(
             [RecipeIngredient(
                 ingredient=ingredient['id'],
@@ -82,12 +84,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
-        self.create_ingredients(ingredients, recipe)
-        self.create_tags(tags, recipe)
+        self._create_ingredients(ingredients, recipe)
+        self._create_tags(tags, recipe)
         return recipe
 
     def update(self, instance, validated_data):
-        print(instance)
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         tags = validated_data.get('tags')
         self.create_tags(tags, instance)
@@ -197,104 +198,3 @@ class LightRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
-
-
-class SubscriptionSerializer(UserSerializer):
-    recipes = LightRecipeSerializer(many=True, read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count'
-        )
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
-
-
-class UserGetSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = (
-            'id', 'email', 'username', 'first_name',
-            'last_name', 'is_subscribed'
-        )
-
-    def get_is_subscribed(self, obj):
-        return Follow.objects.filter(
-            user=self.context['request'].user,
-            author=obj).exists()
-
-
-class SubscriptionGetSerializer(UserGetSerializer):
-    recipes = LightRecipeSerializer(many=True, read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-
-    class Meta(UserGetSerializer.Meta):
-        fields = UserGetSerializer.Meta.fields + ('recipes', 'recipes_count')
-
-    def get_recipes(self, obj):
-        return (Recipe.objects.filter(author=obj))
-
-    def get_recipes_count(self, obj):
-        return (Recipe.objects.filter(author=obj).count())
-
-    def validate(self, attrs):
-        following = User.objects.get(email=attrs['email'])
-        follower = self.context.get('request').user
-        if Follow.objects.filter(user=follower, author=following):
-            raise serializers.ValidationError(
-                detail='Вы уже подписаны на данного пользователя',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if follower == following:
-            raise serializers.ValidationError(
-                detail='Вы не можете подписаться на самого себя',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        return attrs
-
-
-# ------------------------------------------------------------------------
-    # is_subscribed = serializers.SerializerMethodField()
-
-    # def get_is_subscribed(self, obj):
-    #     user = self.context['request'].user
-    #     if user.is_anonymous:
-    #         return False
-    #     is_subscribe = Follow.objects.filter(
-    #         user=user, author=obj
-    #     )
-    #     return is_subscribe.exists()
-
-    # class IRRS(serializers.ModelSerializer):
-#     name = serializers.SerializerMethodField()
-#     measurement_unit = serializers.SerializerMethodField()
-#     id = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = RecipeIngredient
-#         fields = ('name', 'measurement_unit', 'id', 'amount')
-
-#     def get_name(self, obj):
-#         return obj.ingredient.name
-
-#     def get_measurement_unit(self, obj):
-#         return obj.ingredient.measurement_unit
-
-#     def get_id(self, obj):
-#         return obj.ingredient.id
-
-
-# def get_is_favorited(self, obj):
-    #     print(self.context)
-    #     return getattr(obj, 'is_favorited', False)
-
-    # def get_is_in_shopping_cart(self, obj):
-    #     return getattr(obj, 'is_in_shopping_cart', False)
-
-# -------------- need to test ---------------------
