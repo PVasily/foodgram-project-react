@@ -1,6 +1,3 @@
-from core.filters import IngredientFilter, RecipeFilter
-from core.permissions import IsAuthAndAuthorOrReadOnly
-from core.utils import get_shopping_list
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -10,10 +7,15 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from core.utils import get_shopping_list
+from core.filters import IngredientFilter, RecipeFilter
+from core.permissions import IsAuthAndAuthorOrReadOnly
 from .models import Cart, Favorite, Ingredient, Recipe, Tag
-from .serializers import (IngredientSerializer, LightRecipeSerializer,
-                          RecipeCreateSerializer, RecipeReadSerializer,
-                          TagSerializer)
+from .serializers import (
+    IngredientSerializer, LightRecipeSerializer,
+    RecipeCreateSerializer, RecipeReadSerializer,
+    TagSerializer
+)
 
 
 class RecipeViewset(viewsets.ModelViewSet):
@@ -85,7 +87,7 @@ class RecipeViewset(viewsets.ModelViewSet):
         recipe_in_favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['get'], url_path='download_shopping_cart')
+    @action(detail=False, methods=['GET'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         user = request.user
         main_list = get_shopping_list(user)

@@ -91,9 +91,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         tags = validated_data.get('tags')
-        self.create_tags(tags, instance)
+        self._create_tags(tags, instance)
         ingredients = validated_data.get('ingredients')
-        self.create_ingredients(ingredients, instance)
+        self._create_ingredients(ingredients, instance)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -198,3 +198,15 @@ class LightRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        print(data)
+        if data % 2 != 0:
+            raise serializers.ValidationError('Something wrong')
+
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')

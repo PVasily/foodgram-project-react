@@ -124,31 +124,6 @@ class RecipeIngredient(models.Model):
         return f'{self.recipe} {self.ingredient}'
 
 
-# class Follow(models.Model):
-#     user = models.ForeignKey(
-#         User,
-#         verbose_name='Пользователь',
-#         related_name='follower',
-#         on_delete=models.CASCADE
-#     )
-#     author = models.ForeignKey(
-#         User,
-#         verbose_name='Подписки',
-#         related_name='following',
-#         on_delete=models.CASCADE
-#     )
-
-#     class Meta:
-#         verbose_name = 'Подписка'
-#         verbose_name_plural = 'Подписки'
-#         constraints = (
-#             models.UniqueConstraint(
-#                 fields=['user', 'author'],
-#                 name='unique follow'
-#             ),
-#         )
-
-
 class Cart(models.Model):
     user = models.ForeignKey(
         User,

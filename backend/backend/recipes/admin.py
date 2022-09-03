@@ -26,7 +26,6 @@ class RecipeAdmin(admin.ModelAdmin):
     def in_favorited(self, obj):
         return Recipe.objects.filter(favorite_recipes__recipe=obj).count()
 
-
     def ingredients(self, obj):
         return obj.recipe_ing.all()
 
