@@ -43,22 +43,9 @@ class RecipeViewset(viewsets.ModelViewSet):
             recipe=recipe
         )
         if request.method == 'POST':
-            context = {
-                'message': 'Этот рецепт уже есть в списке покупок'
-            }
-            if recipe_in_favorite.exists():
-                return Response(context, status=status.HTTP_400_BAD_REQUEST)
             Cart.objects.create(user=user, recipe=recipe)
             serializer = LightRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        context = {
-            'message': 'Рецепта нет в списке покупок'
-        }
-        if not recipe_in_favorite.exists():
-            return Response(
-                context,
-                status=status.HTTP_400_BAD_REQUEST
-            )
         recipe_in_favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -71,19 +58,9 @@ class RecipeViewset(viewsets.ModelViewSet):
             recipe=recipe
         )
         if request.method == 'POST':
-            context = {
-                'message': 'Это рецепт уже есть в Избранном'
-            }
-            if recipe_in_favorite.exists():
-                return Response(context, status=status.HTTP_400_BAD_REQUEST)
             Favorite.objects.create(user=user, recipe=recipe)
             serializer = LightRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if not recipe_in_favorite.exists():
-            context = {
-                'message': 'Удаляемого рецепта нет в Избранном'
-            }
-            return Response(context, status=status.HTTP_400_BAD_REQUEST)
         recipe_in_favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -93,7 +70,6 @@ class RecipeViewset(viewsets.ModelViewSet):
         main_list = get_shopping_list(user)
         response = HttpResponse(main_list, 'Content-Type: text/plain')
         response['Content-Disposition'] = 'attachment; filename="Cart.txt"'
-        # response.write(u'\ufeff'.encode('utf8'))
         return response
 
 

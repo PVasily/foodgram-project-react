@@ -198,15 +198,3 @@ class LightRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
-
-
-class FavoriteSerializer(serializers.ModelSerializer):
-
-    def validate(self, data):
-        print(data)
-        if data % 2 != 0:
-            raise serializers.ValidationError('Something wrong')
-
-    class Meta:
-        model = Favorite
-        fields = ('user', 'recipe')

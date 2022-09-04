@@ -1,5 +1,4 @@
 from django.contrib import admin
-from admin_decorators import short_description
 
 from .models import (
     Cart, Favorite, Ingredient, Recipe,
@@ -15,6 +14,15 @@ class RecipeTagAdmin(admin.TabularInline):
     model = RecipeTag
 
 
+if not hasattr(admin, "display"):
+    def display(description):
+        def decorator(fn):
+            fn.short_description = description
+            return fn
+        return decorator
+    setattr(admin, "display", display)
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'in_favorited')
@@ -22,7 +30,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientAdmin, RecipeTagAdmin]
 
-    @short_description('Количество добавлений в Избранное')
+    @admin.display(description='Количество добавлений в Избранное')
     def in_favorited(self, obj):
         return Recipe.objects.filter(favorite_recipes__recipe=obj).count()
 

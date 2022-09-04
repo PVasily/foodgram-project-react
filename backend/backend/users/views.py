@@ -66,10 +66,6 @@ class UserViewset(viewsets.ModelViewSet):
                     serializer.data,
                     status=status.HTTP_201_CREATED
                 )
-            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-        if request.method == 'DELETE':
-            subscr = get_object_or_404(Follow, user=follower, author=following)
-            subscr.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        subscr = get_object_or_404(Follow, user=follower, author=following)
+        subscr.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -72,7 +72,7 @@ jobs:
             sudo docker compose exec backend python manage.py makemigrations --noinput
             sudo docker compose exec backend python manage.py migrate --noinput
             sudo docker compose exec backend python manage.py collectstatic --noinput
-            sudo docker compose exec backend python manage.py load_data
+            sudo docker compose exec backend python manage.py import_csv
             
   send_message:
     if: github.ref == 'refs/heads/master'

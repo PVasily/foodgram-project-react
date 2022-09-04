@@ -10,3 +10,4 @@ djoser
 Pillow==9.2.0
 webcolors==1.12
 django-dotenv==1.4.2
+django-admin-decorators==0.1
