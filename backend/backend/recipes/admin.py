@@ -14,15 +14,6 @@ class RecipeTagAdmin(admin.TabularInline):
     model = RecipeTag
 
 
-if not hasattr(admin, "display"):
-    def display(description):
-        def decorator(fn):
-            fn.short_description = description
-            return fn
-        return decorator
-    setattr(admin, "display", display)
-
-
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'in_favorited')
@@ -30,9 +21,10 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'name', 'tags')
     inlines = [RecipeIngredientAdmin, RecipeTagAdmin]
 
-    @admin.display(description='Количество добавлений в Избранное')
     def in_favorited(self, obj):
         return Recipe.objects.filter(favorite_recipes__recipe=obj).count()
+
+    in_favorited.short_description = 'Количество добавлений в Избранное'
 
     def ingredients(self, obj):
         return obj.recipe_ing.all()
