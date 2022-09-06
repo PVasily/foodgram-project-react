@@ -38,8 +38,8 @@ services:
       - ./.env
 
   frontend:
-    image: pvasily/frontend-foodgram:latest
-    # build: ../frontend
+    # image: pvasily/frontend-foodgram:latest
+    build: ../frontend
     volumes:
       - ../frontend/:/app/result_build/
 
