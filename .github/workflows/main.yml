@@ -58,7 +58,7 @@ jobs:
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram:latest
             sudo docker-compose stop
-            sudo docker-compose rm foodgram
+            sudo docker-compose rm pvasily81_backend_1
             touch .env
             echo DEBUG=${{ secrets.DEBUG }} > .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
@@ -70,10 +70,10 @@ jobs:
             echo ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} >> .env
             sudo docker-compose up --build -d
             sudo docker-compose up --build -d
-            sudo docker-compose exec foodgram python manage.py makemigrations --noinput
-            sudo docker-compose exec foodgram python manage.py migrate --noinput
-            sudo docker-compose exec foodgram python manage.py collectstatic --noinput
-            sudo docker-compose exec foodgram python manage.py create_superuser
+            sudo docker-compose exec pvasily81_backend_1 python manage.py makemigrations --noinput
+            sudo docker-compose exec pvasily81_backend_1 python manage.py migrate --noinput
+            sudo docker-compose exec pvasily81_backend_1 python manage.py collectstatic --noinput
+            sudo docker-compose exec pvasily81_backend_1 python manage.py create_superuser
             
   # send_message:
   #   if: github.ref == 'refs/heads/master'
