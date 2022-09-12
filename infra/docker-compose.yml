@@ -26,8 +26,8 @@ services:
       - ./.env
 
   backend:
-    # image: deardevil122/backend:v1
-    build: ../backend
+    image: pvasily/foodgram:latest
+    # build: ../backend
     restart: always
     volumes:
       - static_value:/app/static/
@@ -38,7 +38,7 @@ services:
       - ./.env
 
   frontend:
-    # image: deardevil122/frontend:v1
+    # image: pvasily/frontend-foodgram:latest
     build: ../frontend
     volumes:
       - ../frontend/:/app/result_build/
