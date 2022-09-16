@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from .models import User, Follow
@@ -15,14 +15,15 @@ from .serializers import (
 
 class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (AllowAny, )
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
 
     @action(
         detail=False,
         methods=['GET'],
-        url_path='me'
+        url_path='me',
+        permission_classes=(IsAuthenticated, )
     )
     def me(self, request):
         me = get_object_or_404(User, username=request.user)
@@ -31,7 +32,8 @@ class UserViewset(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        url_path='subscriptions'
+        url_path='subscriptions',
+        permission_classes=(IsAuthenticated, )
     )
     def subscriptions(self, request):
         user_subscriptions = User.objects.filter(following__user=request.user)
@@ -45,7 +47,8 @@ class UserViewset(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
-        url_path='subscribe'
+        url_path='subscribe',
+        permission_classes=(IsAuthenticated, )
     )
     def subscribe(self, request, pk=None):
         follower = request.user
