@@ -4,7 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from core.utils import get_shopping_list
@@ -100,7 +100,7 @@ class ListCartViewSet(viewsets.ModelViewSet):
 
 class ListFavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = LightRecipeSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def get_queryset(self, ):
         user = self.request.user

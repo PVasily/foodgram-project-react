@@ -1,4 +1,7 @@
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core import exceptions as django_exceptions
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers, status
 
