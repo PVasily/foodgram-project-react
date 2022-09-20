@@ -85,7 +85,7 @@ class TagViewset(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
-    permission_classes = (IsAdminUser,)
+    permission_classes = (AllowAny,)
 
 
 class ListCartViewSet(viewsets.ModelViewSet):
