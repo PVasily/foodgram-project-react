@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from djoser.views import UserViewSet
 
 from .models import User, Follow
 from .serializers import (
@@ -13,7 +14,7 @@ from .serializers import (
 )
 
 
-class UserViewset(viewsets.ModelViewSet):
+class UserViewset(UserViewSet):
     queryset = User.objects.all()
     permission_classes = (AllowAny, )
     serializer_class = UserSerializer
@@ -50,11 +51,11 @@ class UserViewset(viewsets.ModelViewSet):
         url_path='subscribe',
         permission_classes=(IsAuthenticated, )
     )
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, *args, **kwargs):
         follower = request.user
-        following = get_object_or_404(User, id=pk)
+        following = get_object_or_404(User, id=self.kwargs['id'])
         if request.method == 'POST':
-            serializer_class = UserGetSerializer
+            serializer_class = SubscriptionGetSerializer
             serializer = serializer_class(
                 following,
                 data=request.data,
