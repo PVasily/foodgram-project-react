@@ -4,12 +4,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from core.utils import get_shopping_list
 from core.filters import IngredientFilter, RecipeFilter
-from core.permissions import IsAuthAndAuthorOrReadOnly
 from .models import Cart, Favorite, Ingredient, Recipe, Tag
 from .serializers import (
     AnonymousRecipeReadSerializer, IngredientSerializer, LightRecipeSerializer,

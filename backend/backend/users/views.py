@@ -1,16 +1,14 @@
-from django.shortcuts import get_object_or_404, get_list_or_404
-from rest_framework import status, viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
-from recipes.models import Recipe
 
 from .models import User, Follow
 from .serializers import (
-    # CustomSetPasswordSerializer,
     SubscriptionGetSerializer,
     UserGetSerializer,
     UserSerializer
@@ -79,4 +77,4 @@ class UserViewset(UserViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         subscr = get_object_or_404(Follow, user=follower, author=following)
         subscr.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)  
+        return Response(status=status.HTTP_204_NO_CONTENT)

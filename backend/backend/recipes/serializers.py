@@ -58,7 +58,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('tags', 'name', 'image',
                   'text', 'cooking_time', 'ingredients'
-        )
+                  )
 
     @staticmethod
     def _create_tags(tags, recipe):
@@ -169,7 +169,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
                   'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name',
                   'image', 'text', 'cooking_time'
-        )
+                  )
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -206,7 +206,7 @@ class AnonymousRecipeReadSerializer(serializers.ModelSerializer):
                   'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name',
                   'image', 'text', 'cooking_time'
-        )
+                  )
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
