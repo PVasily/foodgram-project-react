@@ -12,7 +12,7 @@ from core.filters import IngredientFilter, RecipeFilter
 from core.permissions import IsAuthAndAuthorOrReadOnly
 from .models import Cart, Favorite, Ingredient, Recipe, Tag
 from .serializers import (
-    IngredientSerializer, LightRecipeSerializer,
+    AnonymousRecipeReadSerializer, IngredientSerializer, LightRecipeSerializer,
     RecipeCreateSerializer, RecipeReadSerializer,
     TagSerializer
 )
@@ -20,14 +20,16 @@ from .serializers import (
 
 class RecipeViewset(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthAndAuthorOrReadOnly, )
+    permission_classes = (AllowAny, )
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH', 'DELETE'):
             return RecipeCreateSerializer
+        if self.request.user.is_anonymous:
+            return AnonymousRecipeReadSerializer
         return RecipeReadSerializer
 
     @action(
@@ -101,7 +103,7 @@ class ListCartViewSet(viewsets.ModelViewSet):
 
 class ListFavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = LightRecipeSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self, ):
         user = self.request.user

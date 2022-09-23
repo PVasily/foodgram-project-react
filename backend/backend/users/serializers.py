@@ -1,7 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.conf import settings
-from django.contrib.auth.password_validation import validate_password
-from django.core import exceptions as django_exceptions
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers, status
 
@@ -10,6 +7,23 @@ from .models import User, Follow
 
 
 class UserSerializer(UserCreateSerializer):
+
+    is_subscribed = serializers.SerializerMethodField(
+        source='get_is_subscribed'
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'id', 'email', 'first_name',
+                  'last_name', 'password', 'is_subscribed')
+
+    def get_is_subscribed(self, obj):
+        return Follow.objects.filter(
+            user=self.context['request'].user,
+            author=obj).exists()
+
+
+class AnonymousUserSerializer(UserCreateSerializer):
 
     is_subscribed = serializers.SerializerMethodField(
         source='get_is_subscribed'
@@ -31,28 +45,13 @@ class LightsRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time',)
 
 
-class SubscriptionSerializer(UserSerializer):
-    recipes = LightsRecipeSerializer(many=True, read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count'
-        )
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
-
-
 class UserGetSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'first_name',
+            'email', 'id', 'username', 'first_name',
             'last_name', 'is_subscribed'
         )
 
@@ -78,18 +77,19 @@ class UserGetSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionGetSerializer(UserGetSerializer):
-    recipes = LightsRecipeSerializer(many=True, read_only=True)
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'first_name',
+            'email', 'id', 'username', 'first_name',
             'last_name', 'is_subscribed', 'recipes', 'recipes_count'
         )
 
-    def get_recipes(self, obj):
-        return Recipe.objects.filter(author=obj)
-
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.all()[:3]
+        return LightsRecipeSerializer(recipes, many=True, read_only=True).data

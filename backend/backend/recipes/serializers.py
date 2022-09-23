@@ -2,7 +2,7 @@ import webcolors
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, AnonymousUserSerializer
 from .models import (
     Cart, Favorite, Ingredient, Recipe, RecipeIngredient, Tag
 )
@@ -42,15 +42,11 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ('name', 'slug', 'color')
+        fields = ('id', 'name', 'slug', 'color')
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
 
-    author = serializers.PrimaryKeyRelatedField(
-        read_only=True,
-        default=serializers.CurrentUserDefault()
-    )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True
@@ -60,9 +56,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'name', 'author', 'image',
-                  'text', 'cooking_time', 'ingredients',
-                  'is_favorited', 'is_in_shopping_cart')
+        fields = ('tags', 'name', 'image',
+                  'text', 'cooking_time', 'ingredients'
+        )
 
     @staticmethod
     def _create_tags(tags, recipe):
@@ -99,8 +95,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return RecipeReadSerializer(
-            instance, context=context).data
+        return RecipeReadSerializer(instance, context=context).data
 
     def validate(self, data):
         ingredients = data['ingredients']
@@ -170,9 +165,48 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'id', 'name', 'author', 'image', 'text',
-                  'cooking_time', 'ingredients', 'is_favorited',
-                  'is_in_shopping_cart')
+        fields = ('tags', 'id', 'author',
+                  'ingredients', 'is_favorited',
+                  'is_in_shopping_cart', 'name',
+                  'image', 'text', 'cooking_time'
+        )
+
+    def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        favorite = Favorite.objects.filter(
+            user=user, recipe=obj
+        )
+        return favorite.exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        recipe_in_cart = Cart.objects.filter(
+            user=user, recipe=obj
+        )
+        return recipe_in_cart.exists()
+
+
+class AnonymousRecipeReadSerializer(serializers.ModelSerializer):
+
+    tags = TagSerializer(many=True, read_only=True)
+    author = AnonymousUserSerializer()
+    ingredients = IngredientRecipeReadSerializer(
+        source='recipe_ing', many=True, read_only=True
+    )
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = ('tags', 'id', 'author',
+                  'ingredients', 'is_favorited',
+                  'is_in_shopping_cart', 'name',
+                  'image', 'text', 'cooking_time'
+        )
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user

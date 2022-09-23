@@ -1,4 +1,4 @@
-import django_filters as filters
+from django_filters import rest_framework as filters
 
 from recipes.models import Ingredient, Recipe, Tag
 
@@ -10,6 +10,10 @@ class RecipeFilterMainPage(filters.FilterSet):
         field_name='tags__slug',
         to_field_name='slug',
     )
+
+
+class TagsFilter(filters.BaseInFilter, filters.CharFilter):
+    pass
 
 
 class RecipeFilter(filters.FilterSet):
