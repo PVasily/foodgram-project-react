@@ -2,7 +2,12 @@
 
 <!-- ![example workflow](https://github.com/Pvasily/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg?event=push) -->
 
-*Проект доступен по адресу*  [http://foodgram-pro.hopto.org/recipes](http://foodgram-pro.hopto.org/recipes)
+*Проект доступен по адресу*  [http://foodgram-pro.hopto.org](http://foodgram-pro.hopto.org)
+
+### Данные для входа в панель администратора
+*Логин: admin@admin.admin*
+*Пароль: admin*
+
 
 ### Описание
 
