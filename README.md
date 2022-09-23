@@ -2,7 +2,7 @@
 
 <!-- ![example workflow](https://github.com/Pvasily/yamdb_final/actions/workflows/yamdb_workflow.yml/badge.svg?event=push) -->
 
-<!-- *Проект доступен по адресу*  [http://51.250.25.69:8888/redoc/](http://51.250.25.69:8888/redoc/)  -->
+*Проект доступен по адресу*  [http://foodgram-pro.hopto.org/recipes](http://foodgram-pro.hopto.org/recipes)
 
 ### Описание
 
