@@ -41,3 +41,14 @@ class IsAuthAndAuthorOrReadOnly(BasePermission):
                 and obj.author == request.user
             )
         )
+
+
+class IsAdminOrReadOnly(BasePermission):
+    """
+    Only admin or  read.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.method in SAFE_METHODS
+            or request.user.is_staff
+        )
