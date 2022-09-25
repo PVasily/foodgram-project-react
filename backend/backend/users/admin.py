@@ -25,7 +25,7 @@ class UserAdmin(admin.ModelAdmin):
             'fields': ('username', 'password1', 'password2'),
         }),
     )
-    list_display = ('username', 'email', 'first_name', 'last_name', 'password')
+    list_display = ('username', 'email', 'first_name', 'last_name')
     list_filter = ('email', 'username')
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)

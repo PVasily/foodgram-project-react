@@ -91,5 +91,8 @@ class SubscriptionGetSerializer(UserGetSerializer):
         return Recipe.objects.filter(author=obj).count()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.all()[:3]
+        recipes_limit = int(
+            self.context['request'].query_params['recipes_limit']
+        )
+        recipes = Recipe.objects.all()[:recipes_limit]
         return LightsRecipeSerializer(recipes, many=True, read_only=True).data

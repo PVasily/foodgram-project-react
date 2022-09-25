@@ -4,11 +4,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
 
 from core.utils import get_shopping_list
 from core.filters import IngredientFilter, RecipeFilter
+from core.mixins import IngredientsTagsMixin, ListCartFavoriteMixin
+from core.permissions import IsAuthor
 from .models import Cart, Favorite, Ingredient, Recipe, Tag
 from .serializers import (
     AnonymousRecipeReadSerializer, IngredientSerializer, LightRecipeSerializer,
@@ -31,39 +33,38 @@ class RecipeViewset(viewsets.ModelViewSet):
             return AnonymousRecipeReadSerializer
         return RecipeReadSerializer
 
+    @staticmethod
+    def set_action_for_recipe(model, request, pk):
+        user = request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+        target_recipe = model.objects.filter(
+            user=user,
+            recipe=recipe
+        )
+        if request.method == 'POST':
+            model.objects.create(user=user, recipe=recipe)
+            serializer = LightRecipeSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        target_recipe.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
-        url_path='shopping_cart'
+        url_path='shopping_cart',
+        permission_classes=(IsAuthor, IsAdminUser, )
     )
     def shopping_cart(self, request, pk):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
-        recipe_in_favorite = Cart.objects.filter(
-            user=user,
-            recipe=recipe
-        )
-        if request.method == 'POST':
-            Cart.objects.create(user=user, recipe=recipe)
-            serializer = LightRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        recipe_in_favorite.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.set_action_for_recipe(Cart, request, pk)
 
-    @action(detail=True, methods=['POST', 'DELETE'], url_path='favorite')
+    @action(
+        detail=True,
+        methods=['POST', 'DELETE'],
+        url_path='favorite',
+        permission_classes=(IsAuthor, IsAdminUser, )
+    )
     def favorite(self, request, pk):
-        user = self.request.user
-        recipe = get_object_or_404(Recipe, pk=pk)
-        recipe_in_favorite = Favorite.objects.filter(
-            user=user,
-            recipe=recipe
-        )
-        if request.method == 'POST':
-            Favorite.objects.create(user=user, recipe=recipe)
-            serializer = LightRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        recipe_in_favorite.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.set_action_for_recipe(Favorite, request, pk)
 
     @action(detail=False, methods=['GET'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
@@ -74,35 +75,26 @@ class RecipeViewset(viewsets.ModelViewSet):
         return response
 
 
-class IngredientViewset(viewsets.ModelViewSet):
+class IngredientViewset(IngredientsTagsMixin):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
-    permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
     filter_class = IngredientFilter
 
 
-class TagViewset(viewsets.ModelViewSet):
+class TagViewset(IngredientsTagsMixin):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
-    permission_classes = (AllowAny,)
 
 
-class ListCartViewSet(viewsets.ModelViewSet):
-    serializer_class = LightRecipeSerializer
-    queryset = Recipe.objects.all()
-    permission_classes = (IsAuthenticated,)
+class ListCartViewSet(ListCartFavoriteMixin):
 
     def get_queryset(self):
         user = self.request.user
         return Recipe.objects.filter(cart_recipes__user=user)
 
 
-class ListFavoriteViewSet(viewsets.ModelViewSet):
-    serializer_class = LightRecipeSerializer
-    permission_classes = (IsAuthenticated,)
+class ListFavoriteViewSet(ListCartFavoriteMixin):
 
     def get_queryset(self, ):
         user = self.request.user

@@ -61,7 +61,7 @@ class Recipe(models.Model):
     text = models.TextField('Описание рецепта', blank=True)
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(1)]
     )
     is_favorited = models.BooleanField(default=False)
     is_in_shopping_cart = models.BooleanField(default=False)
