@@ -4,9 +4,9 @@
 *Проект доступен по адресу*  [http://foodgram-pro.hopto.org](http://foodgram-pro.hopto.org)
 
 ### Данные для входа в панель администратора
-*Логин: admin@admin.admin*
+*Логин: user@user.user*
 
-*Пароль: admin*
+*Пароль: user*
 
 
 ### Описание
