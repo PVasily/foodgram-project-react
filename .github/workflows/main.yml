@@ -80,7 +80,6 @@ jobs:
             sudo docker-compose exec pvasily81_backend_1 python manage.py makemigrations --noinput
             sudo docker-compose exec pvasily81_backend_1 python manage.py migrate --noinput
             sudo docker-compose exec pvasily81_backend_1 python manage.py collectstatic --noinput
-            sudo docker-compose exec pvasily81_backend_1 python manage.py create_superuser
             sudo docker-compose exec pvasily81_backend_1 python manage.py import_csv
             
   # send_message:
