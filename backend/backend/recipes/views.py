@@ -4,13 +4,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from core.utils import get_shopping_list
 from core.filters import IngredientFilter, RecipeFilter
 from core.mixins import IngredientsTagsMixin, ListCartFavoriteMixin
-from core.permissions import IsAuthor
 from .models import Cart, Favorite, Ingredient, Recipe, Tag
 from .serializers import (
     AnonymousRecipeReadSerializer, IngredientSerializer, LightRecipeSerializer,
@@ -34,14 +33,13 @@ class RecipeViewset(viewsets.ModelViewSet):
         return RecipeReadSerializer
 
     @staticmethod
-    def set_action_for_recipe(model, request, pk):
-        user = request.user
+    def _set_action_for_recipe(model, user, method, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         target_recipe = model.objects.filter(
             user=user,
             recipe=recipe
         )
-        if request.method == 'POST':
+        if method == 'POST':
             model.objects.create(user=user, recipe=recipe)
             serializer = LightRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -52,19 +50,30 @@ class RecipeViewset(viewsets.ModelViewSet):
         detail=True,
         methods=['POST', 'DELETE'],
         url_path='shopping_cart',
-        permission_classes=(IsAuthor, IsAdminUser, )
+        permission_classes=(IsAuthenticated | IsAdminUser, )
     )
     def shopping_cart(self, request, pk):
-        return self.set_action_for_recipe(Cart, request, pk)
+        print(request.user, request.method)
+        return self._set_action_for_recipe(
+            Cart,
+            request.user,
+            request.method,
+            pk
+        )
 
     @action(
         detail=True,
         methods=['POST', 'DELETE'],
         url_path='favorite',
-        permission_classes=(IsAuthor, IsAdminUser, )
+        permission_classes=(IsAuthenticated | IsAdminUser, )
     )
     def favorite(self, request, pk):
-        return self.set_action_for_recipe(Favorite, request, pk)
+        return self._set_action_for_recipe(
+            Favorite,
+            request.user,
+            request.method,
+            pk
+        )
 
     @action(detail=False, methods=['GET'], url_path='download_shopping_cart')
     def download_shopping_cart(self, request):

@@ -98,37 +98,43 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return RecipeReadSerializer(instance, context=context).data
 
     def validate(self, data):
+        print(data['ingredients'][0]['amount'])
         ingredients = data['ingredients']
         if not ingredients:
-            raise serializers.ValidationError({
-                'ingredients': 'Выберите ингредиент!'
-            })
+            raise serializers.ValidationError([
+                'Выберите ингредиент!'
+            ])
         ingredients_list = []
         for ingredient in ingredients:
             ingredient_id = ingredient['id']
             if ingredient_id in ingredients_list:
-                raise serializers.ValidationError({
-                    'ingredients': 'Вы уже добавили этот ингредиент!'
-                })
+                raise serializers.ValidationError([
+                    'Вы уже добавили этот ингредиент!'
+                ])
             ingredients_list.append(ingredient_id)
+        for ingredient in ingredients:
+            if ingredient['amount'] <= 0:
+                raise serializers.ValidationError([
+                    'Количество должно быть больше нуля!'
+                ])
         tags = data['tags']
         if not tags:
-            raise serializers.ValidationError({
-                'tags': 'Нужно выбрать хотя бы один тэг!'
-            })
+            raise serializers.ValidationError([
+                'Нужно выбрать хотя бы один тэг!'
+            ])
         tags_list = []
         for tag in tags:
             if tag in tags_list:
-                raise serializers.ValidationError({
-                    'tags': 'Тэги должны быть уникальными!'
-                })
+                raise serializers.ValidationError([
+                    'Тэги должны быть уникальными!'
+                ])
             tags_list.append(tag)
 
         cooking_time = data['cooking_time']
         if int(cooking_time) <= 0:
-            raise serializers.ValidationError({
-                'cooking_time': 'Время приготовление должно быть больше нуля'
-            })
+            raise serializers.ValidationError([
+                'Время приготовление должно быть больше нуля'
+            ])
 
         return data
 

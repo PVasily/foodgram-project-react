@@ -9,6 +9,7 @@ from djoser.views import UserViewSet
 
 from .models import User, Follow
 from .serializers import (
+    UserProfileSerializer,
     SubscriptionGetSerializer,
     UserGetSerializer,
     UserSerializer
@@ -20,8 +21,11 @@ class UserViewset(UserViewSet):
     permission_classes = (AllowAny, )
 
     def get_serializer_class(self):
+        print(self.action)
         if self.action == 'set_password':
             return SetPasswordSerializer
+        if self.action == 'create':
+            return UserProfileSerializer
         return UserSerializer
 
     @action(
@@ -58,7 +62,7 @@ class UserViewset(UserViewSet):
         permission_classes=(IsAuthenticated, )
     )
     def subscribe(self, request, *args, **kwargs):
-        follower = request.user
+        follower = self.request.user
         following = get_object_or_404(User, id=self.kwargs['id'])
         if request.method == 'POST':
             if not Follow.objects.filter(

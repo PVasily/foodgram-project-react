@@ -7,5 +7,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         User.objects.create_superuser(
-            'admin', 'admin@admin.admin', 'karamba03'
+            'admin', 'admin@admin.admin', 'admin'
         )

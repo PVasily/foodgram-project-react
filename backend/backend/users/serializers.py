@@ -23,6 +23,14 @@ class UserSerializer(UserCreateSerializer):
             author=obj).exists()
 
 
+class UserProfileSerializer(UserCreateSerializer):
+
+    class Meta:
+        model = User
+        fields = ('username', 'id', 'email', 'first_name',
+                  'last_name', 'password')
+
+
 class AnonymousUserSerializer(UserCreateSerializer):
 
     is_subscribed = serializers.SerializerMethodField(
